@@ -33,6 +33,7 @@ from src.presentation.schemas.patient_schemas import (
 )
 from src.presentation.schemas.session_schemas import (
     FogEpisodeItem,
+    SessionClinicalReportResponse,
     SessionCreateRequest,
     SessionResultSyncResponse,
     SessionResultUpload,
@@ -41,6 +42,8 @@ from src.presentation.schemas.session_schemas import (
     SkeletonBatchUpload,
     VideoFallbackAnalysisResponse,
     WindowPredictionItem,
+    WsLb6FrameMessage,
+    WsWindowPredictionMessage,
 )
 
 __all__ = [
@@ -65,6 +68,7 @@ __all__ = [
     "ProblemDetailsSchema",
     "RefreshRequest",
     "RegisterRequest",
+    "SessionClinicalReportResponse",
     "SessionCreateRequest",
     "SessionResultSyncResponse",
     "SessionResultUpload",
@@ -76,4 +80,6 @@ __all__ = [
     "UtcDatetime",
     "VideoFallbackAnalysisResponse",
     "WindowPredictionItem",
+    "WsLb6FrameMessage",
+    "WsWindowPredictionMessage",
 ]

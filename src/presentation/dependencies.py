@@ -5,6 +5,8 @@ from fastapi import Depends, Header, Request
 
 from src.application.dtos import ActorContext
 from src.application.interfaces import (
+    ClinicalReportPdfRendererPort,
+    CloudKeypointClassifierPort,
     CloudVideoAnalyzerPort,
     EmergencyNotifierPort,
     PasswordHasherPort,
@@ -35,6 +37,7 @@ from src.application.use_cases.patients import (
 from src.application.use_cases.sessions import (
     AnalyzeVideoFallbackUseCase,
     CreateSessionUseCase,
+    GetSessionReportUseCase,
     UploadSessionResultsUseCase,
     UploadSkeletonBatchUseCase,
 )
@@ -78,6 +81,14 @@ def get_cloud_video_analyzer(request: Request) -> CloudVideoAnalyzerPort:
     return cast(CloudVideoAnalyzerPort, request.app.state.cloud_video_analyzer)
 
 
+def get_pdf_renderer(request: Request) -> ClinicalReportPdfRendererPort:
+    return cast(ClinicalReportPdfRendererPort, request.app.state.pdf_renderer)
+
+
+def get_cloud_classifier(request: Request) -> CloudKeypointClassifierPort:
+    return cast(CloudKeypointClassifierPort, request.app.state.cloud_classifier)
+
+
 SettingsDep = Annotated[Settings, Depends(get_app_settings)]
 UowFactoryDep = Annotated[UnitOfWorkFactory, Depends(get_uow_factory)]
 PasswordHasherDep = Annotated[PasswordHasherPort, Depends(get_password_hasher)]
@@ -87,6 +98,8 @@ SkeletonCodecDep = Annotated[SkeletonCodecPort, Depends(get_skeleton_codec)]
 EmergencyNotifierDep = Annotated[EmergencyNotifierPort, Depends(get_emergency_notifier)]
 VideoDisposalDep = Annotated[VideoDisposalPort, Depends(get_video_disposal)]
 CloudVideoAnalyzerDep = Annotated[CloudVideoAnalyzerPort, Depends(get_cloud_video_analyzer)]
+PdfRendererDep = Annotated[ClinicalReportPdfRendererPort, Depends(get_pdf_renderer)]
+CloudClassifierDep = Annotated[CloudKeypointClassifierPort, Depends(get_cloud_classifier)]
 
 
 def get_current_actor(
@@ -222,6 +235,13 @@ def get_analyze_video_use_case(
         analyzer,
         max_upload_bytes=settings.max_video_upload_bytes,
     )
+
+
+def get_session_report_use_case(
+    uow_factory: UowFactoryDep,
+    pdf_renderer: PdfRendererDep,
+) -> GetSessionReportUseCase:
+    return GetSessionReportUseCase(uow_factory, pdf_renderer)
 
 
 def get_patient_trends_use_case(uow_factory: UowFactoryDep) -> GetPatientTrendsUseCase:

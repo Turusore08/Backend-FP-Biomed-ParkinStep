@@ -1,0 +1,3623 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ParkinStep Companion API",
+    "description": "API sinkronisasi telemedicine, registry model edge OTA, log medikasi Levodopa, dan notifikasi darurat untuk aplikasi mobile ParkinStep.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/healthz": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Liveness probe",
+        "operationId": "healthz_healthz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Healthz Healthz Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/readyz": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Readiness probe verifying database connectivity",
+        "operationId": "readyz_readyz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Register akun baru (PATIENT | CAREGIVER | CLINICIAN)",
+        "operationId": "register_api_v1_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Autentikasi akun pasien, caregiver, atau klinisi",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Rotasi Refresh Token -> Access JWT baru",
+        "operationId": "refresh_api_v1_auth_refresh_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Revoke refresh token sesi perangkat",
+        "operationId": "logout_api_v1_auth_logout_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/LogoutRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/patients/{patient_id}": {
+      "get": {
+        "tags": [
+          "Patients & UU PDP"
+        ],
+        "summary": "Ambil profil pasien, kontak darurat, dan consent flags UU PDP",
+        "operationId": "get_patient_api_v1_patients__patient_id__get",
+        "parameters": [
+          {
+            "name": "patient_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Patient Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientProfileResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Patients & UU PDP"
+        ],
+        "summary": "Update kontak darurat atau pencabutan consent UU PDP",
+        "operationId": "update_patient_api_v1_patients__patient_id__patch",
+        "parameters": [
+          {
+            "name": "patient_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Patient Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatientPatchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientProfileResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Patients & UU PDP"
+        ],
+        "summary": "Hak penghapusan permanen data cloud (UU PDP No. 27/2022) + re-auth",
+        "operationId": "delete_patient_api_v1_patients__patient_id__delete",
+        "parameters": [
+          {
+            "name": "patient_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Patient Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatientEraseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/patients/{patient_id}/medications": {
+      "post": {
+        "tags": [
+          "Medications"
+        ],
+        "summary": "Catat jadwal atau konsumsi medikasi Levodopa",
+        "operationId": "create_medication_log_api_v1_patients__patient_id__medications_post",
+        "parameters": [
+          {
+            "name": "patient_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Patient Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MedicationLogCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MedicationLogResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Medications"
+        ],
+        "summary": "Daftar riwayat minum obat Levodopa (paginated)",
+        "operationId": "list_medication_logs_api_v1_patients__patient_id__medications_get",
+        "parameters": [
+          {
+            "name": "patient_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Patient Id"
+            }
+          },
+          {
+            "name": "from_utc",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From Utc"
+            }
+          },
+          {
+            "name": "to_utc",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To Utc"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MedicationLogListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/api/v1/sessions": {
+      "post": {
+        "tags": [
+          "Clinical Sessions"
+        ],
+        "summary": "Registrasi sesi tes 360\u00b0 Turning-in-Place (offline-first compatible)",
+        "operationId": "create_session_api_v1_sessions_post",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{session_id}/skeleton-frames": {
+      "post": {
+        "tags": [
+          "Clinical Sessions"
+        ],
+        "summary": "Unggah batch keypoint LB6 anonim [T][6][3] (tanpa video mentah)",
+        "operationId": "upload_skeleton_frames_api_v1_sessions__session_id__skeleton_frames_post",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SkeletonBatchUpload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkeletonBatchAckResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{session_id}/results": {
+      "post": {
+        "tags": [
+          "Clinical Sessions"
+        ],
+        "summary": "Unggah ringkasan episode FoG & probabilitas window hasil Edge-AI",
+        "operationId": "upload_session_results_api_v1_sessions__session_id__results_post",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionResultUpload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResultSyncResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{session_id}/analyze-video": {
+      "post": {
+        "tags": [
+          "Clinical Sessions"
+        ],
+        "summary": "(Cloud Fallback Opt-In) Analisis video terenkripsi dengan auto-delete wajib",
+        "operationId": "analyze_video_fallback_api_v1_sessions__session_id__analyze_video_post",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_analyze_video_fallback_api_v1_sessions__session_id__analyze_video_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VideoFallbackAnalysisResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unsupported Media Type"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{session_id}/report": {
+      "get": {
+        "tags": [
+          "Clinical Sessions"
+        ],
+        "summary": "Unduh laporan klinis sesi skrining (?format=json|pdf)",
+        "operationId": "get_session_report_api_v1_sessions__session_id__report_get",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "json",
+                "pdf"
+              ],
+              "type": "string",
+              "default": "json",
+              "title": "Format"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionClinicalReportResponse"
+                }
+              },
+              "application/pdf": {}
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/api/v1/patients/{patient_id}/analytics/trends": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Ambil tren perkembangan FoG & komparasi ON vs OFF medikasi",
+        "operationId": "get_patient_trends_api_v1_patients__patient_id__analytics_trends_get",
+        "parameters": [
+          {
+            "name": "patient_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Patient Id"
+            }
+          },
+          {
+            "name": "from_utc",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From Utc"
+            }
+          },
+          {
+            "name": "to_utc",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To Utc"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientTrendsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/emergency": {
+      "post": {
+        "tags": [
+          "Emergency Alerts"
+        ],
+        "summary": "Kirim eskalasi darurat jatuh atau prolonged freeze > 15 detik",
+        "operationId": "dispatch_emergency_alert_api_v1_alerts_emergency_post",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmergencyAlertRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmergencyAlertResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/api/v1/models/manifest": {
+      "get": {
+        "tags": [
+          "OTA Model Registry"
+        ],
+        "summary": "Ambil manifest versi model Edge-AI OTA, scaler_stats & threshold resmi",
+        "operationId": "get_model_manifest_api_v1_models_manifest_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-App-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-App-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelManifestSchema"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsSchema"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AuthTokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token"
+          },
+          "expires_in_sec": {
+            "type": "integer",
+            "title": "Expires In Sec"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "access_token",
+          "refresh_token",
+          "expires_in_sec",
+          "user_id",
+          "role"
+        ],
+        "title": "AuthTokenResponse"
+      },
+      "Body_analyze_video_fallback_api_v1_sessions__session_id__analyze_video_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_analyze_video_fallback_api_v1_sessions__session_id__analyze_video_post"
+      },
+      "ClassifierName": {
+        "type": "string",
+        "enum": [
+          "LIGHTGBM_FFT",
+          "LIGHT_STGCN",
+          "PURE_BIMAMBA"
+        ],
+        "title": "ClassifierName",
+        "description": "Supported FoG classifiers in B_15hz production profile."
+      },
+      "ConsentFlagsSchema": {
+        "properties": {
+          "consent_local": {
+            "type": "boolean",
+            "title": "Consent Local"
+          },
+          "consent_skeleton_sync": {
+            "type": "boolean",
+            "title": "Consent Skeleton Sync"
+          },
+          "consent_cloud_video": {
+            "type": "boolean",
+            "title": "Consent Cloud Video"
+          },
+          "accepted_at_utc": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accepted At Utc"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "consent_local",
+          "consent_skeleton_sync",
+          "consent_cloud_video",
+          "accepted_at_utc"
+        ],
+        "title": "ConsentFlagsSchema"
+      },
+      "EmergencyAlertRequest": {
+        "properties": {
+          "alert_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Alert Id"
+          },
+          "patient_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Patient Id"
+          },
+          "session_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Session Id"
+          },
+          "trigger_type": {
+            "$ref": "#/components/schemas/EmergencyTrigger"
+          },
+          "triggered_at_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Triggered At Utc"
+          },
+          "cancelled_by_user": {
+            "type": "boolean",
+            "title": "Cancelled By User"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "alert_id",
+          "patient_id",
+          "session_id",
+          "trigger_type",
+          "triggered_at_utc",
+          "cancelled_by_user"
+        ],
+        "title": "EmergencyAlertRequest"
+      },
+      "EmergencyAlertResponse": {
+        "properties": {
+          "alert_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Alert Id"
+          },
+          "patient_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Patient Id"
+          },
+          "session_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Session Id"
+          },
+          "trigger_type": {
+            "$ref": "#/components/schemas/EmergencyTrigger"
+          },
+          "triggered_at_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Triggered At Utc"
+          },
+          "cancelled_by_user": {
+            "type": "boolean",
+            "title": "Cancelled By User"
+          },
+          "dispatched_at_utc": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dispatched At Utc"
+          },
+          "notified_contacts_count": {
+            "type": "integer",
+            "title": "Notified Contacts Count"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "alert_id",
+          "patient_id",
+          "session_id",
+          "trigger_type",
+          "triggered_at_utc",
+          "cancelled_by_user",
+          "dispatched_at_utc",
+          "notified_contacts_count"
+        ],
+        "title": "EmergencyAlertResponse"
+      },
+      "EmergencyContactSchema": {
+        "properties": {
+          "contact_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Contact Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "phone_e164": {
+            "type": "string",
+            "title": "Phone E164"
+          },
+          "relation": {
+            "type": "string",
+            "title": "Relation"
+          },
+          "is_primary": {
+            "type": "boolean",
+            "title": "Is Primary"
+          },
+          "updated_at_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At Utc"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "contact_id",
+          "name",
+          "phone_e164",
+          "relation",
+          "is_primary",
+          "updated_at_utc"
+        ],
+        "title": "EmergencyContactSchema"
+      },
+      "EmergencyContactUpsertSchema": {
+        "properties": {
+          "contact_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "phone_e164": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 8,
+            "title": "Phone E164"
+          },
+          "relation": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Relation"
+          },
+          "is_primary": {
+            "type": "boolean",
+            "title": "Is Primary",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "phone_e164",
+          "relation"
+        ],
+        "title": "EmergencyContactUpsertSchema"
+      },
+      "EmergencyTrigger": {
+        "type": "string",
+        "enum": [
+          "PROLONGED_FREEZE_15S",
+          "SUDDEN_HIP_DROP_IMMOBILITY"
+        ],
+        "title": "EmergencyTrigger",
+        "description": "Fall & prolonged freeze escalation trigger type."
+      },
+      "FogEpisodeItem": {
+        "properties": {
+          "episode_index": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Episode Index"
+          },
+          "start_sec": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Start Sec"
+          },
+          "end_sec": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "End Sec"
+          },
+          "duration_sec": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Duration Sec"
+          },
+          "peak_calibrated_score": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Peak Calibrated Score"
+          },
+          "mean_freeze_index": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Freeze Index"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "episode_index",
+          "start_sec",
+          "end_sec",
+          "duration_sec",
+          "peak_calibrated_score"
+        ],
+        "title": "FogEpisodeItem"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "InferenceMode": {
+        "type": "string",
+        "enum": [
+          "LIVE_CAUSAL",
+          "POST_SESSION_EXACT",
+          "CLOUD_FALLBACK"
+        ],
+        "title": "InferenceMode",
+        "description": "Edge vs Cloud fallback inference mode."
+      },
+      "Lb6FrameSchema": {
+        "items": {
+          "$ref": "#/components/schemas/Lb6JointSchema"
+        },
+        "type": "array",
+        "maxItems": 6,
+        "minItems": 6
+      },
+      "Lb6JointSchema": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array",
+        "maxItems": 3,
+        "minItems": 3
+      },
+      "LoginRequest": {
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Identifier"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Password"
+          },
+          "device_id": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Device Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "identifier",
+          "password",
+          "device_id"
+        ],
+        "title": "LoginRequest"
+      },
+      "LogoutRequest": {
+        "properties": {
+          "refresh_token": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512,
+                "minLength": 10
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refresh Token"
+          },
+          "device_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 160,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "LogoutRequest"
+      },
+      "MedicationLogCreate": {
+        "properties": {
+          "log_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Log Id"
+          },
+          "drug_name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Drug Name"
+          },
+          "dosage_mg": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Dosage Mg"
+          },
+          "taken_at_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Taken At Utc"
+          },
+          "med_state": {
+            "$ref": "#/components/schemas/MedicationState"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "log_id",
+          "drug_name",
+          "dosage_mg",
+          "taken_at_utc",
+          "med_state"
+        ],
+        "title": "MedicationLogCreate"
+      },
+      "MedicationLogListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MedicationLogResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "MedicationLogListResponse"
+      },
+      "MedicationLogResponse": {
+        "properties": {
+          "log_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Log Id"
+          },
+          "patient_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Patient Id"
+          },
+          "drug_name": {
+            "type": "string",
+            "title": "Drug Name"
+          },
+          "dosage_mg": {
+            "type": "number",
+            "title": "Dosage Mg"
+          },
+          "taken_at_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Taken At Utc"
+          },
+          "med_state": {
+            "$ref": "#/components/schemas/MedicationState"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "synced_at_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Synced At Utc"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "log_id",
+          "patient_id",
+          "drug_name",
+          "dosage_mg",
+          "taken_at_utc",
+          "med_state",
+          "notes",
+          "synced_at_utc"
+        ],
+        "title": "MedicationLogResponse"
+      },
+      "MedicationState": {
+        "type": "string",
+        "enum": [
+          "ON",
+          "OFF",
+          "UNKNOWN"
+        ],
+        "title": "MedicationState",
+        "description": "Levodopa medication state at test/log time."
+      },
+      "ModelArtifactSpecSchema": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "format": {
+            "$ref": "#/components/schemas/ModelFormat"
+          },
+          "download_url": {
+            "type": "string",
+            "title": "Download Url"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Sha256"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          },
+          "requires_scaled_input": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requires Scaled Input"
+          },
+          "threshold_val": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold Val"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "format",
+          "download_url",
+          "sha256",
+          "size_bytes",
+          "requires_scaled_input",
+          "threshold_val"
+        ],
+        "title": "ModelArtifactSpecSchema"
+      },
+      "ModelFormat": {
+        "type": "string",
+        "enum": [
+          "ONNX",
+          "LGBM_TXT"
+        ],
+        "title": "ModelFormat",
+        "description": "Model artifact format distributed in OTA manifest."
+      },
+      "ModelManifestSchema": {
+        "properties": {
+          "bundle_version": {
+            "type": "string",
+            "title": "Bundle Version"
+          },
+          "target_fps": {
+            "type": "integer",
+            "const": 15,
+            "title": "Target Fps"
+          },
+          "window_sec": {
+            "type": "number",
+            "title": "Window Sec"
+          },
+          "stride_sec": {
+            "type": "number",
+            "title": "Stride Sec"
+          },
+          "min_run_windows": {
+            "type": "integer",
+            "title": "Min Run Windows"
+          },
+          "pose_estimator": {
+            "$ref": "#/components/schemas/ModelArtifactSpecSchema"
+          },
+          "primary_classifier": {
+            "$ref": "#/components/schemas/ModelArtifactSpecSchema"
+          },
+          "secondary_classifier": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ModelArtifactSpecSchema"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "scaler_mean_b15hz": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "maxItems": 9,
+            "minItems": 9,
+            "title": "Scaler Mean B15Hz"
+          },
+          "scaler_std_b15hz": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "maxItems": 9,
+            "minItems": 9,
+            "title": "Scaler Std B15Hz"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "bundle_version",
+          "target_fps",
+          "window_sec",
+          "stride_sec",
+          "min_run_windows",
+          "pose_estimator",
+          "primary_classifier",
+          "secondary_classifier",
+          "scaler_mean_b15hz",
+          "scaler_std_b15hz"
+        ],
+        "title": "ModelManifestSchema"
+      },
+      "PatientEraseRequest": {
+        "properties": {
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Password"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "password"
+        ],
+        "title": "PatientEraseRequest"
+      },
+      "PatientPatchRequest": {
+        "properties": {
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "birth_year": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2026.0,
+                "minimum": 1900.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Birth Year"
+          },
+          "consent_local": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consent Local"
+          },
+          "consent_skeleton_sync": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consent Skeleton Sync"
+          },
+          "consent_cloud_video": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consent Cloud Video"
+          },
+          "emergency_contacts": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/EmergencyContactUpsertSchema"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emergency Contacts"
+          },
+          "updated_at_utc": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At Utc"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PatientPatchRequest"
+      },
+      "PatientProfileResponse": {
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Patient Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "birth_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Birth Year"
+          },
+          "consent": {
+            "$ref": "#/components/schemas/ConsentFlagsSchema"
+          },
+          "emergency_contacts": {
+            "items": {
+              "$ref": "#/components/schemas/EmergencyContactSchema"
+            },
+            "type": "array",
+            "title": "Emergency Contacts"
+          },
+          "updated_at_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At Utc"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "patient_id",
+          "user_id",
+          "display_name",
+          "birth_year",
+          "consent",
+          "emergency_contacts",
+          "updated_at_utc"
+        ],
+        "title": "PatientProfileResponse"
+      },
+      "PatientTrendsResponse": {
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Patient Id"
+          },
+          "total_sessions": {
+            "type": "integer",
+            "title": "Total Sessions"
+          },
+          "on_med_avg_fog_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "On Med Avg Fog Pct"
+          },
+          "off_med_avg_fog_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Off Med Avg Fog Pct"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/TrendPointSchema"
+            },
+            "type": "array",
+            "title": "Points"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "patient_id",
+          "total_sessions",
+          "on_med_avg_fog_pct",
+          "off_med_avg_fog_pct",
+          "points"
+        ],
+        "title": "PatientTrendsResponse"
+      },
+      "ProblemDetailsSchema": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "status": {
+            "type": "integer",
+            "title": "Status"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "instance": {
+            "type": "string",
+            "title": "Instance"
+          },
+          "error_code": {
+            "type": "string",
+            "title": "Error Code"
+          },
+          "errors": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Errors"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "title",
+          "status",
+          "detail",
+          "instance",
+          "error_code"
+        ],
+        "title": "ProblemDetailsSchema",
+        "description": "RFC 7807 Problem Details error payload."
+      },
+      "RefreshRequest": {
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 10,
+            "title": "Refresh Token"
+          },
+          "device_id": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Device Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "refresh_token",
+          "device_id"
+        ],
+        "title": "RefreshRequest"
+      },
+      "RegisterRequest": {
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 3,
+            "title": "Identifier"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Password"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole",
+            "default": "PATIENT"
+          },
+          "device_id": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Device Id"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "birth_year": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2026.0,
+                "minimum": 1900.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Birth Year"
+          },
+          "consent_local": {
+            "type": "boolean",
+            "title": "Consent Local",
+            "default": true
+          },
+          "consent_skeleton_sync": {
+            "type": "boolean",
+            "title": "Consent Skeleton Sync",
+            "default": false
+          },
+          "consent_cloud_video": {
+            "type": "boolean",
+            "title": "Consent Cloud Video",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "identifier",
+          "password",
+          "device_id"
+        ],
+        "title": "RegisterRequest"
+      },
+      "SessionClinicalReportResponse": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Session Id"
+          },
+          "patient_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Patient Id"
+          },
+          "patient_display_name": {
+            "type": "string",
+            "title": "Patient Display Name"
+          },
+          "protocol": {
+            "$ref": "#/components/schemas/SessionProtocol"
+          },
+          "inference_mode": {
+            "$ref": "#/components/schemas/InferenceMode"
+          },
+          "med_state": {
+            "$ref": "#/components/schemas/MedicationState"
+          },
+          "classifier_used": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClassifierName"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "model_bundle_version": {
+            "type": "string",
+            "title": "Model Bundle Version"
+          },
+          "threshold_used": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold Used"
+          },
+          "target_fps": {
+            "type": "integer",
+            "enum": [
+              15,
+              30
+            ],
+            "title": "Target Fps"
+          },
+          "started_at_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At Utc"
+          },
+          "ended_at_utc": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At Utc"
+          },
+          "duration_sec": {
+            "type": "number",
+            "title": "Duration Sec"
+          },
+          "valid_lb6_ratio": {
+            "type": "number",
+            "title": "Valid Lb6 Ratio"
+          },
+          "fog_percentage": {
+            "type": "number",
+            "title": "Fog Percentage"
+          },
+          "episode_count": {
+            "type": "integer",
+            "title": "Episode Count"
+          },
+          "total_fog_duration_sec": {
+            "type": "number",
+            "title": "Total Fog Duration Sec"
+          },
+          "median_episode_duration_sec": {
+            "type": "number",
+            "title": "Median Episode Duration Sec"
+          },
+          "mean_freeze_index": {
+            "type": "number",
+            "title": "Mean Freeze Index"
+          },
+          "mean_bilateral_asymmetry": {
+            "type": "number",
+            "title": "Mean Bilateral Asymmetry"
+          },
+          "asymmetry_level_id": {
+            "type": "string",
+            "title": "Asymmetry Level Id"
+          },
+          "fall_guard_false_alarms": {
+            "type": "integer",
+            "title": "Fall Guard False Alarms"
+          },
+          "video_securely_deleted": {
+            "type": "boolean",
+            "title": "Video Securely Deleted"
+          },
+          "episodes": {
+            "items": {
+              "$ref": "#/components/schemas/FogEpisodeItem"
+            },
+            "type": "array",
+            "title": "Episodes"
+          },
+          "windows": {
+            "items": {
+              "$ref": "#/components/schemas/WindowPredictionItem"
+            },
+            "type": "array",
+            "title": "Windows"
+          },
+          "medical_disclaimer": {
+            "type": "string",
+            "title": "Medical Disclaimer"
+          },
+          "generated_at_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At Utc"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "session_id",
+          "patient_id",
+          "patient_display_name",
+          "protocol",
+          "inference_mode",
+          "med_state",
+          "classifier_used",
+          "model_bundle_version",
+          "threshold_used",
+          "target_fps",
+          "started_at_utc",
+          "ended_at_utc",
+          "duration_sec",
+          "valid_lb6_ratio",
+          "fog_percentage",
+          "episode_count",
+          "total_fog_duration_sec",
+          "median_episode_duration_sec",
+          "mean_freeze_index",
+          "mean_bilateral_asymmetry",
+          "asymmetry_level_id",
+          "fall_guard_false_alarms",
+          "video_securely_deleted",
+          "episodes",
+          "windows",
+          "medical_disclaimer",
+          "generated_at_utc"
+        ],
+        "title": "SessionClinicalReportResponse"
+      },
+      "SessionCreateRequest": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Session Id"
+          },
+          "patient_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Patient Id"
+          },
+          "protocol": {
+            "$ref": "#/components/schemas/SessionProtocol"
+          },
+          "inference_mode": {
+            "$ref": "#/components/schemas/InferenceMode"
+          },
+          "med_state": {
+            "$ref": "#/components/schemas/MedicationState"
+          },
+          "last_medication_log_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Medication Log Id"
+          },
+          "target_fps": {
+            "type": "integer",
+            "enum": [
+              15,
+              30
+            ],
+            "title": "Target Fps"
+          },
+          "model_bundle_version": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Model Bundle Version"
+          },
+          "started_at_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At Utc"
+          },
+          "safety_checklist_confirmed": {
+            "type": "boolean",
+            "title": "Safety Checklist Confirmed"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "session_id",
+          "patient_id",
+          "protocol",
+          "inference_mode",
+          "med_state",
+          "target_fps",
+          "model_bundle_version",
+          "started_at_utc",
+          "safety_checklist_confirmed"
+        ],
+        "title": "SessionCreateRequest"
+      },
+      "SessionProtocol": {
+        "type": "string",
+        "enum": [
+          "TURNING_360_2MIN",
+          "FREE_WALK_MONITORING"
+        ],
+        "title": "SessionProtocol",
+        "description": "Clinical gait screening protocol."
+      },
+      "SessionResultSyncResponse": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Session Id"
+          },
+          "classifier_used": {
+            "$ref": "#/components/schemas/ClassifierName"
+          },
+          "ended_at_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ended At Utc"
+          },
+          "episode_count": {
+            "type": "integer",
+            "title": "Episode Count"
+          },
+          "window_count": {
+            "type": "integer",
+            "title": "Window Count"
+          },
+          "fog_percentage": {
+            "type": "number",
+            "title": "Fog Percentage"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "session_id",
+          "classifier_used",
+          "ended_at_utc",
+          "episode_count",
+          "window_count",
+          "fog_percentage"
+        ],
+        "title": "SessionResultSyncResponse"
+      },
+      "SessionResultUpload": {
+        "properties": {
+          "classifier_used": {
+            "$ref": "#/components/schemas/ClassifierName"
+          },
+          "threshold_used": {
+            "type": "number",
+            "title": "Threshold Used"
+          },
+          "ended_at_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ended At Utc"
+          },
+          "duration_sec": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Duration Sec"
+          },
+          "valid_lb6_ratio": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Valid Lb6 Ratio"
+          },
+          "fog_percentage": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Fog Percentage"
+          },
+          "episode_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Episode Count"
+          },
+          "total_fog_duration_sec": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Total Fog Duration Sec"
+          },
+          "median_episode_duration_sec": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Median Episode Duration Sec"
+          },
+          "episodes": {
+            "items": {
+              "$ref": "#/components/schemas/FogEpisodeItem"
+            },
+            "type": "array",
+            "title": "Episodes"
+          },
+          "windows": {
+            "items": {
+              "$ref": "#/components/schemas/WindowPredictionItem"
+            },
+            "type": "array",
+            "title": "Windows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "classifier_used",
+          "threshold_used",
+          "ended_at_utc",
+          "duration_sec",
+          "valid_lb6_ratio",
+          "fog_percentage",
+          "episode_count",
+          "total_fog_duration_sec",
+          "median_episode_duration_sec",
+          "episodes",
+          "windows"
+        ],
+        "title": "SessionResultUpload"
+      },
+      "SessionSummary": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Session Id"
+          },
+          "patient_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Patient Id"
+          },
+          "protocol": {
+            "$ref": "#/components/schemas/SessionProtocol"
+          },
+          "inference_mode": {
+            "$ref": "#/components/schemas/InferenceMode"
+          },
+          "med_state": {
+            "$ref": "#/components/schemas/MedicationState"
+          },
+          "last_medication_log_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Medication Log Id"
+          },
+          "target_fps": {
+            "type": "integer",
+            "enum": [
+              15,
+              30
+            ],
+            "title": "Target Fps"
+          },
+          "model_bundle_version": {
+            "type": "string",
+            "title": "Model Bundle Version"
+          },
+          "started_at_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At Utc"
+          },
+          "safety_checklist_confirmed": {
+            "type": "boolean",
+            "title": "Safety Checklist Confirmed"
+          },
+          "created_at_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At Utc"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "session_id",
+          "patient_id",
+          "protocol",
+          "inference_mode",
+          "med_state",
+          "last_medication_log_id",
+          "target_fps",
+          "model_bundle_version",
+          "started_at_utc",
+          "safety_checklist_confirmed",
+          "created_at_utc"
+        ],
+        "title": "SessionSummary"
+      },
+      "SkeletonBatchAckResponse": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Session Id"
+          },
+          "chunk_index": {
+            "type": "integer",
+            "title": "Chunk Index"
+          },
+          "frame_count": {
+            "type": "integer",
+            "title": "Frame Count"
+          },
+          "compressed_bytes": {
+            "type": "integer",
+            "title": "Compressed Bytes"
+          },
+          "received_at_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Received At Utc"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "session_id",
+          "chunk_index",
+          "frame_count",
+          "compressed_bytes",
+          "received_at_utc"
+        ],
+        "title": "SkeletonBatchAckResponse"
+      },
+      "SkeletonBatchUpload": {
+        "properties": {
+          "chunk_index": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Chunk Index"
+          },
+          "sampling_hz": {
+            "type": "number",
+            "enum": [
+              15.0,
+              30.0
+            ],
+            "title": "Sampling Hz"
+          },
+          "frame_timestamps_ms": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "maxItems": 3600,
+            "minItems": 1,
+            "title": "Frame Timestamps Ms"
+          },
+          "lb6_xyc": {
+            "items": {
+              "$ref": "#/components/schemas/Lb6FrameSchema"
+            },
+            "type": "array",
+            "maxItems": 3600,
+            "minItems": 1,
+            "title": "Lb6 Xyc"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "chunk_index",
+          "sampling_hz",
+          "frame_timestamps_ms",
+          "lb6_xyc"
+        ],
+        "title": "SkeletonBatchUpload"
+      },
+      "TrendPointSchema": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Session Id"
+          },
+          "started_at_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At Utc"
+          },
+          "med_state": {
+            "$ref": "#/components/schemas/MedicationState"
+          },
+          "fog_percentage": {
+            "type": "number",
+            "title": "Fog Percentage"
+          },
+          "episode_count": {
+            "type": "integer",
+            "title": "Episode Count"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "session_id",
+          "started_at_utc",
+          "med_state",
+          "fog_percentage",
+          "episode_count"
+        ],
+        "title": "TrendPointSchema"
+      },
+      "UserRole": {
+        "type": "string",
+        "enum": [
+          "PATIENT",
+          "CAREGIVER",
+          "CLINICIAN"
+        ],
+        "title": "UserRole",
+        "description": "Supported user roles defined in API_CONTRACT.md."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VideoFallbackAnalysisResponse": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Session Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "frames_analyzed": {
+            "type": "integer",
+            "title": "Frames Analyzed"
+          },
+          "auto_delete_after_inference": {
+            "type": "boolean",
+            "title": "Auto Delete After Inference"
+          },
+          "video_securely_deleted": {
+            "type": "boolean",
+            "title": "Video Securely Deleted"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "session_id",
+          "status",
+          "frames_analyzed",
+          "auto_delete_after_inference",
+          "video_securely_deleted",
+          "detail"
+        ],
+        "title": "VideoFallbackAnalysisResponse"
+      },
+      "WindowPredictionItem": {
+        "properties": {
+          "window_idx": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Window Idx"
+          },
+          "start_sec": {
+            "type": "number",
+            "title": "Start Sec"
+          },
+          "end_sec": {
+            "type": "number",
+            "title": "End Sec"
+          },
+          "raw_prob": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Raw Prob"
+          },
+          "calibrated_score": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Calibrated Score"
+          },
+          "pred_raw": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "title": "Pred Raw"
+          },
+          "pred_postprocessed": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "title": "Pred Postprocessed"
+          },
+          "freeze_index_ankle": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Freeze Index Ankle"
+          },
+          "bilateral_asym_ankle": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bilateral Asym Ankle"
+          },
+          "low_quality_flag": {
+            "type": "boolean",
+            "title": "Low Quality Flag"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "window_idx",
+          "start_sec",
+          "end_sec",
+          "raw_prob",
+          "calibrated_score",
+          "pred_raw",
+          "pred_postprocessed",
+          "low_quality_flag"
+        ],
+        "title": "WindowPredictionItem"
+      }
+    }
+  }
+}

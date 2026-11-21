@@ -4,12 +4,14 @@ from uuid import UUID
 from pydantic import Field, field_validator
 
 from src.application.dtos import (
+    SessionClinicalReportOutputDTO,
     SessionResultSyncOutputDTO,
     SessionSummaryOutputDTO,
     SkeletonBatchAckOutputDTO,
     VideoFallbackResultOutputDTO,
 )
 from src.domain.enums import (
+    AlertTier,
     ClassifierName,
     InferenceMode,
     MedicationState,
@@ -171,3 +173,106 @@ class VideoFallbackAnalysisResponse(StrictBaseSchema):
             video_securely_deleted=dto.video_securely_deleted,
             detail=dto.detail,
         )
+
+
+class SessionClinicalReportResponse(StrictBaseSchema):
+    session_id: UUID
+    patient_id: UUID
+    patient_display_name: str
+    protocol: SessionProtocol
+    inference_mode: InferenceMode
+    med_state: MedicationState
+    classifier_used: ClassifierName | None
+    model_bundle_version: str
+    threshold_used: float | None
+    target_fps: Literal[15, 30]
+    started_at_utc: UtcDatetime
+    ended_at_utc: UtcDatetime | None
+    duration_sec: float
+    valid_lb6_ratio: float
+    fog_percentage: float
+    episode_count: int
+    total_fog_duration_sec: float
+    median_episode_duration_sec: float
+    mean_freeze_index: float
+    mean_bilateral_asymmetry: float
+    asymmetry_level_id: str
+    fall_guard_false_alarms: int
+    video_securely_deleted: bool
+    episodes: list[FogEpisodeItem]
+    windows: list[WindowPredictionItem]
+    medical_disclaimer: str
+    generated_at_utc: UtcDatetime
+
+    @classmethod
+    def from_dto(cls, dto: SessionClinicalReportOutputDTO) -> "SessionClinicalReportResponse":
+        fps_literal: Literal[15, 30] = 30 if dto.target_fps == 30 else 15
+        return cls(
+            session_id=dto.session_id,
+            patient_id=dto.patient_id,
+            patient_display_name=dto.patient_display_name,
+            protocol=dto.protocol,
+            inference_mode=dto.inference_mode,
+            med_state=dto.med_state,
+            classifier_used=dto.classifier_used,
+            model_bundle_version=dto.model_bundle_version,
+            threshold_used=dto.threshold_used,
+            target_fps=fps_literal,
+            started_at_utc=dto.started_at_utc,
+            ended_at_utc=dto.ended_at_utc,
+            duration_sec=dto.duration_sec,
+            valid_lb6_ratio=dto.valid_lb6_ratio,
+            fog_percentage=dto.fog_percentage,
+            episode_count=dto.episode_count,
+            total_fog_duration_sec=dto.total_fog_duration_sec,
+            median_episode_duration_sec=dto.median_episode_duration_sec,
+            mean_freeze_index=dto.mean_freeze_index,
+            mean_bilateral_asymmetry=dto.mean_bilateral_asymmetry,
+            asymmetry_level_id=dto.asymmetry_level_id,
+            fall_guard_false_alarms=dto.fall_guard_false_alarms,
+            video_securely_deleted=dto.video_securely_deleted,
+            episodes=[
+                FogEpisodeItem(
+                    episode_index=ep.episode_index,
+                    start_sec=ep.start_sec,
+                    end_sec=ep.end_sec,
+                    duration_sec=ep.duration_sec,
+                    peak_calibrated_score=ep.peak_calibrated_score,
+                    mean_freeze_index=ep.mean_freeze_index,
+                )
+                for ep in dto.episodes
+            ],
+            windows=[
+                WindowPredictionItem(
+                    window_idx=win.window_idx,
+                    start_sec=win.start_sec,
+                    end_sec=win.end_sec,
+                    raw_prob=win.raw_prob,
+                    calibrated_score=win.calibrated_score,
+                    pred_raw=1 if win.pred_raw == 1 else 0,
+                    pred_postprocessed=1 if win.pred_postprocessed == 1 else 0,
+                    freeze_index_ankle=win.freeze_index_ankle,
+                    bilateral_asym_ankle=win.bilateral_asym_ankle,
+                    low_quality_flag=win.low_quality_flag,
+                )
+                for win in dto.windows
+            ],
+            medical_disclaimer=dto.medical_disclaimer,
+            generated_at_utc=dto.generated_at_utc,
+        )
+
+
+class WsLb6FrameMessage(StrictBaseSchema):
+    type: Literal["LB6_FRAME"]
+    seq: int = Field(..., ge=0)
+    t_ms: int = Field(..., ge=0)
+    lb6_xyc: Lb6FrameSchema
+
+
+class WsWindowPredictionMessage(StrictBaseSchema):
+    type: Literal["WINDOW_PREDICTION"] = "WINDOW_PREDICTION"
+    window_idx: int
+    raw_prob: float
+    calibrated_score: float
+    alert_tier: AlertTier
+    freeze_index_ankle: float

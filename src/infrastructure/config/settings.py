@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     model_cdn_base_url: str = "https://models.parkinstep.example.org/bundles"
     max_video_upload_bytes: int = Field(default=31_457_280, ge=1024, le=104_857_600)
     video_temp_dir: str | None = None
+    cloud_fallback_onnx_path: str | None = None
     cors_allowed_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
     log_level: str = "INFO"
 

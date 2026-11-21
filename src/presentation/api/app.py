@@ -5,6 +5,8 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.application.interfaces import (
+    ClinicalReportPdfRendererPort,
+    CloudKeypointClassifierPort,
     CloudVideoAnalyzerPort,
     EmergencyNotifierPort,
     PasswordHasherPort,
@@ -14,7 +16,9 @@ from src.application.interfaces import (
     VideoDisposalPort,
 )
 from src.infrastructure.config import Settings, get_settings
+from src.infrastructure.export import ReportLabPdfReportRenderer
 from src.infrastructure.logging import configure_logging
+from src.infrastructure.ml import build_cloud_classifier
 from src.infrastructure.notifications import LoggingEmergencyNotifier
 from src.infrastructure.persistence import create_async_engine_from_url, create_session_factory
 from src.infrastructure.persistence.codecs.skeleton_codec import ZlibSkeletonCodec
@@ -31,6 +35,7 @@ from src.infrastructure.security.video_disposal import (
 from src.presentation.api.middleware import IdempotencyMiddleware, register_exception_handlers
 from src.presentation.api.v1.health import router as health_router
 from src.presentation.api.v1.router import api_v1_router
+from src.presentation.api.v1.ws_stream import router as ws_stream_router
 
 
 @asynccontextmanager
@@ -50,6 +55,8 @@ def create_app(
     emergency_notifier: EmergencyNotifierPort | None = None,
     video_disposal: VideoDisposalPort | None = None,
     cloud_video_analyzer: CloudVideoAnalyzerPort | None = None,
+    pdf_renderer: ClinicalReportPdfRendererPort | None = None,
+    cloud_classifier: CloudKeypointClassifierPort | None = None,
     extra_idempotent_patterns: list[str] | None = None,
 ) -> FastAPI:
     """Create and wire the FastAPI application following Clean Architecture boundaries."""
@@ -95,6 +102,10 @@ def create_app(
     app.state.emergency_notifier = emergency_notifier or LoggingEmergencyNotifier()
     app.state.video_disposal = video_disposal or SecureTempVideoDisposer(cfg.video_temp_dir)
     app.state.cloud_video_analyzer = cloud_video_analyzer or StubCloudVideoAnalyzer()
+    app.state.pdf_renderer = pdf_renderer or ReportLabPdfReportRenderer()
+    app.state.cloud_classifier = cloud_classifier or build_cloud_classifier(
+        cfg.cloud_fallback_onnx_path
+    )
 
     register_exception_handlers(app)
 
@@ -128,5 +139,6 @@ def create_app(
 
     app.include_router(health_router)
     app.include_router(api_v1_router)
+    app.include_router(ws_stream_router)
 
     return app

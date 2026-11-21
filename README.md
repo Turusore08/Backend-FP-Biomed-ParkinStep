@@ -31,17 +31,23 @@ uv sync --python 3.12
 # 3. Apply PostgreSQL migrations
 uv run alembic upgrade head
 
-# 4. Run development server
+# 4. Run development server (REST + WebSocket)
 uv run uvicorn src.main:app --reload
 
-# 5. Run lint, strict type-checking, and test suite
-uv run ruff check src tests migrations
+# 5. Export OpenAPI 3.1.0 contract snapshot
+uv run python scripts/export_openapi.py
+
+# 6. Run lint, strict type-checking, and test suite
+uv run ruff check src tests migrations scripts
 uv run mypy src
 uv run pytest --cov=src --cov-report=term-missing --cov-fail-under=85
+
+# 7. Run hardened container stack (PostgreSQL + rootless API)
+docker compose up --build -d
 ```
 
 ## Implementation Phases
 
 - [x] **Phase 1:** Clean Architecture scaffold, PostgreSQL schema + Alembic migrations, JWT auth (`register`/`login`/`refresh`/`logout`) with token rotation & reuse detection, Patients & UU PDP (`GET`/`PATCH`/`DELETE`), Idempotency middleware, RFC 7807 error handler.
 - [x] **Phase 2:** Medication logs, Clinical sessions, LB6 skeleton frames (`[T][6][3]`), Session results, Cloud video fallback opt-in, Longitudinal analytics trends, Emergency alerts, OTA model manifest (`B_15hz`).
-- [ ] **Phase 3:** Clinical PDF/JSON report export, WebSocket `CLOUD_FALLBACK` streaming (`126` FFT features), OpenAPI 3.1 contract CI export, Rootless hardened Dockerfile & Compose.
+- [x] **Phase 3:** Clinical PDF/JSON report export (`GET /api/v1/sessions/{session_id}/report`), WebSocket `CLOUD_FALLBACK` streaming (`ws/v1/stream/keypoints/{session_id}`, 126 FFT features bit-exact), OpenAPI 3.1 contract CI export, Rootless hardened Dockerfile & Compose.

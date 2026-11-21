@@ -9,6 +9,7 @@ from src.application.dtos.clinical_dtos import (
     EmergencyAlertCreateDTO,
     EmergencyAlertOutputDTO,
     FogEpisodeInputDTO,
+    FogEpisodeOutputDTO,
     MedicationListQueryDTO,
     MedicationLogCreateDTO,
     MedicationLogListOutputDTO,
@@ -16,6 +17,7 @@ from src.application.dtos.clinical_dtos import (
     ModelArtifactSpecOutputDTO,
     ModelManifestOutputDTO,
     PatientTrendsOutputDTO,
+    SessionClinicalReportOutputDTO,
     SessionCreateDTO,
     SessionResultSyncOutputDTO,
     SessionResultUploadDTO,
@@ -25,6 +27,7 @@ from src.application.dtos.clinical_dtos import (
     TrendPointOutputDTO,
     VideoFallbackResultOutputDTO,
     WindowPredictionInputDTO,
+    WindowPredictionOutputDTO,
 )
 from src.application.dtos.common import UNSET, ActorContext, PatchField, UnsetType
 from src.application.dtos.patient_dtos import (
@@ -46,6 +49,7 @@ __all__ = [
     "EmergencyContactInputDTO",
     "EmergencyContactOutputDTO",
     "FogEpisodeInputDTO",
+    "FogEpisodeOutputDTO",
     "LoginRequestDTO",
     "LogoutRequestDTO",
     "MedicationListQueryDTO",
@@ -62,6 +66,7 @@ __all__ = [
     "RefreshTokenRequestDTO",
     "RegisterRequestDTO",
     "SessionCreateDTO",
+    "SessionClinicalReportOutputDTO",
     "SessionResultSyncOutputDTO",
     "SessionResultUploadDTO",
     "SessionSummaryOutputDTO",
@@ -71,4 +76,5 @@ __all__ = [
     "UnsetType",
     "VideoFallbackResultOutputDTO",
     "WindowPredictionInputDTO",
+    "WindowPredictionOutputDTO",
 ]

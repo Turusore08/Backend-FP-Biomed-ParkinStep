@@ -195,6 +195,61 @@ class VideoFallbackResultOutputDTO:
 
 
 @dataclass(frozen=True, slots=True)
+class FogEpisodeOutputDTO:
+    episode_index: int
+    start_sec: float
+    end_sec: float
+    duration_sec: float
+    peak_calibrated_score: float
+    mean_freeze_index: float | None
+
+
+@dataclass(frozen=True, slots=True)
+class WindowPredictionOutputDTO:
+    window_idx: int
+    start_sec: float
+    end_sec: float
+    raw_prob: float
+    calibrated_score: float
+    pred_raw: int
+    pred_postprocessed: int
+    freeze_index_ankle: float | None
+    bilateral_asym_ankle: float | None
+    low_quality_flag: bool
+
+
+@dataclass(frozen=True, slots=True)
+class SessionClinicalReportOutputDTO:
+    session_id: UUID
+    patient_id: UUID
+    patient_display_name: str
+    protocol: SessionProtocol
+    inference_mode: InferenceMode
+    med_state: MedicationState
+    classifier_used: ClassifierName | None
+    model_bundle_version: str
+    threshold_used: float | None
+    target_fps: int
+    started_at_utc: datetime
+    ended_at_utc: datetime | None
+    duration_sec: float
+    valid_lb6_ratio: float
+    fog_percentage: float
+    episode_count: int
+    total_fog_duration_sec: float
+    median_episode_duration_sec: float
+    mean_freeze_index: float
+    mean_bilateral_asymmetry: float
+    asymmetry_level_id: str
+    fall_guard_false_alarms: int
+    video_securely_deleted: bool
+    episodes: list[FogEpisodeOutputDTO]
+    windows: list[WindowPredictionOutputDTO]
+    medical_disclaimer: str
+    generated_at_utc: datetime
+
+
+@dataclass(frozen=True, slots=True)
 class TrendPointOutputDTO:
     session_id: UUID
     started_at_utc: datetime

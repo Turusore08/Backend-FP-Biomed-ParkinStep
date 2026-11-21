@@ -17,6 +17,8 @@ from src.application.interfaces.security_ports import (
     TokenProviderPort,
 )
 from src.application.interfaces.service_ports import (
+    ClinicalReportPdfRendererPort,
+    CloudKeypointClassifierPort,
     CloudVideoAnalyzerPort,
     EmergencyNotifierPort,
     SkeletonCodecPort,
@@ -27,6 +29,8 @@ from src.application.interfaces.service_ports import (
 __all__ = [
     "AccessTokenClaims",
     "AlertRepository",
+    "ClinicalReportPdfRendererPort",
+    "CloudKeypointClassifierPort",
     "CloudVideoAnalyzerPort",
     "EmergencyNotifierPort",
     "IdempotencyRepository",

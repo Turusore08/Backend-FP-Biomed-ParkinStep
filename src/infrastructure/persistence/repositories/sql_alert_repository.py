@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.entities import EmergencyAlert
@@ -42,3 +43,14 @@ class SqlAlertRepository:
     async def get_by_id(self, alert_id: UUID) -> EmergencyAlert | None:
         row = await self._session.get(EmergencyAlertORM, alert_id)
         return _to_entity(row) if row is not None else None
+
+    async def count_cancelled_by_session(self, session_id: UUID) -> int:
+        stmt = (
+            select(func.count())
+            .select_from(EmergencyAlertORM)
+            .where(
+                EmergencyAlertORM.session_id == session_id,
+                EmergencyAlertORM.cancelled_by_user.is_(True),
+            )
+        )
+        return int((await self._session.execute(stmt)).scalar_one())

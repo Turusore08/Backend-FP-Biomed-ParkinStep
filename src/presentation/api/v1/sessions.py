@@ -1,8 +1,8 @@
 from collections.abc import AsyncIterator
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Header, UploadFile, status
+from fastapi import APIRouter, Depends, File, Header, Query, Response, UploadFile, status
 
 from src.application.dtos import (
     FogEpisodeInputDTO,
@@ -14,6 +14,7 @@ from src.application.dtos import (
 from src.application.use_cases.sessions import (
     AnalyzeVideoFallbackUseCase,
     CreateSessionUseCase,
+    GetSessionReportUseCase,
     UploadSessionResultsUseCase,
     UploadSkeletonBatchUseCase,
 )
@@ -21,11 +22,13 @@ from src.presentation.dependencies import (
     CurrentActorDep,
     get_analyze_video_use_case,
     get_create_session_use_case,
+    get_session_report_use_case,
     get_upload_session_results_use_case,
     get_upload_skeleton_use_case,
 )
 from src.presentation.schemas import (
     ProblemDetailsSchema,
+    SessionClinicalReportResponse,
     SessionCreateRequest,
     SessionResultSyncResponse,
     SessionResultUpload,
@@ -212,3 +215,33 @@ async def analyze_video_fallback(
         return VideoFallbackAnalysisResponse.from_dto(dto)
     finally:
         await file.close()
+
+
+@router.get(
+    "/{session_id}/report",
+    response_model=SessionClinicalReportResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Unduh laporan klinis sesi skrining (?format=json|pdf)",
+    responses={
+        200: {"content": {"application/pdf": {}}},
+        401: {"model": ProblemDetailsSchema},
+        403: {"model": ProblemDetailsSchema},
+        404: {"model": ProblemDetailsSchema},
+        422: {"model": ProblemDetailsSchema},
+    },
+)
+async def get_session_report(
+    session_id: UUID,
+    actor: CurrentActorDep,
+    use_case: Annotated[GetSessionReportUseCase, Depends(get_session_report_use_case)],
+    format: Annotated[Literal["json", "pdf"], Query()] = "json",
+) -> SessionClinicalReportResponse | Response:
+    if format == "pdf":
+        pdf_bytes, filename = await use_case.execute_pdf(actor, session_id)
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    dto = await use_case.execute_json(actor, session_id)
+    return SessionClinicalReportResponse.from_dto(dto)

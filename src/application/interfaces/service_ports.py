@@ -2,10 +2,13 @@ from collections.abc import AsyncIterator
 from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 from uuid import UUID
 
 from src.domain.entities import EmergencyAlert, EmergencyContact
+
+if TYPE_CHECKING:
+    from src.application.dtos import SessionClinicalReportOutputDTO
 
 
 @dataclass(frozen=True, slots=True)
@@ -64,4 +67,26 @@ class SkeletonCodecPort(Protocol):
         self,
         payload: bytes,
     ) -> tuple[list[int], list[list[list[float]]]]:
+        ...
+
+
+class ClinicalReportPdfRendererPort(Protocol):
+    """Port for rendering clinical FoG session reports to PDF bytes."""
+
+    def render_pdf(self, report: "SessionClinicalReportOutputDTO") -> bytes:
+        ...
+
+
+class CloudKeypointClassifierPort(Protocol):
+    """Port for real-time 126-FFT feature FoG classification in CLOUD_FALLBACK mode."""
+
+    @property
+    def threshold_val(self) -> float:
+        ...
+
+    def predict_window_prob(
+        self,
+        features_126: list[float],
+        freeze_index_ankle: float,
+    ) -> float:
         ...

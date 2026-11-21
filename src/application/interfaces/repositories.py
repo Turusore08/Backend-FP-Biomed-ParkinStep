@@ -153,6 +153,9 @@ class SessionRepository(Protocol):
     async def get_by_id(self, session_id: UUID) -> ClinicalSession | None:
         ...
 
+    async def get_with_details(self, session_id: UUID) -> ClinicalSession | None:
+        ...
+
     async def add_skeleton_chunk(self, chunk: SkeletonChunk) -> None:
         ...
 
@@ -182,6 +185,9 @@ class AlertRepository(Protocol):
         ...
 
     async def get_by_id(self, alert_id: UUID) -> EmergencyAlert | None:
+        ...
+
+    async def count_cancelled_by_session(self, session_id: UUID) -> int:
         ...
 
 

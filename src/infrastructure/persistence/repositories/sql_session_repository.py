@@ -92,6 +92,57 @@ class SqlSessionRepository:
         row = await self._session.get(ClinicalSessionORM, session_id)
         return _to_entity(row) if row is not None else None
 
+    async def get_with_details(self, session_id: UUID) -> ClinicalSession | None:
+        row = await self._session.get(ClinicalSessionORM, session_id)
+        if row is None:
+            return None
+
+        session = _to_entity(row)
+
+        ep_stmt = (
+            select(FogEpisodeORM)
+            .where(FogEpisodeORM.session_id == session_id)
+            .order_by(FogEpisodeORM.episode_index.asc())
+        )
+        ep_rows = (await self._session.execute(ep_stmt)).scalars().all()
+        session.episodes = [
+            FogEpisode(
+                episode_id=ep.episode_id,
+                session_id=ep.session_id,
+                episode_index=ep.episode_index,
+                start_sec=ep.start_sec,
+                end_sec=ep.end_sec,
+                duration_sec=ep.duration_sec,
+                peak_calibrated_score=ep.peak_calibrated_score,
+                mean_freeze_index=ep.mean_freeze_index,
+            )
+            for ep in ep_rows
+        ]
+
+        win_stmt = (
+            select(WindowPredictionORM)
+            .where(WindowPredictionORM.session_id == session_id)
+            .order_by(WindowPredictionORM.window_idx.asc())
+        )
+        win_rows = (await self._session.execute(win_stmt)).scalars().all()
+        session.windows = [
+            WindowPrediction(
+                session_id=w.session_id,
+                window_idx=w.window_idx,
+                start_sec=w.start_sec,
+                end_sec=w.end_sec,
+                raw_prob=w.raw_prob,
+                calibrated_score=w.calibrated_score,
+                pred_raw=w.pred_raw,
+                pred_postprocessed=w.pred_postprocessed,
+                freeze_index_ankle=w.freeze_index_ankle,
+                bilateral_asym_ankle=w.bilateral_asym_ankle,
+                low_quality_flag=w.low_quality_flag,
+            )
+            for w in win_rows
+        ]
+        return session
+
     async def add_skeleton_chunk(self, chunk: SkeletonChunk) -> None:
         self._session.add(
             SkeletonChunkORM(
