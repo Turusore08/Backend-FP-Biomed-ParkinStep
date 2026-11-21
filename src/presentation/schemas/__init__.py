@@ -1,3 +1,11 @@
+from src.presentation.schemas.alert_schemas import (
+    EmergencyAlertRequest,
+    EmergencyAlertResponse,
+)
+from src.presentation.schemas.analytics_schemas import (
+    PatientTrendsResponse,
+    TrendPointSchema,
+)
 from src.presentation.schemas.auth_schemas import (
     AuthTokenResponse,
     LoginRequest,
@@ -6,6 +14,15 @@ from src.presentation.schemas.auth_schemas import (
     RegisterRequest,
 )
 from src.presentation.schemas.common import ProblemDetailsSchema, StrictBaseSchema, UtcDatetime
+from src.presentation.schemas.medication_schemas import (
+    MedicationLogCreate,
+    MedicationLogListResponse,
+    MedicationLogResponse,
+)
+from src.presentation.schemas.model_schemas import (
+    ModelArtifactSpecSchema,
+    ModelManifestSchema,
+)
 from src.presentation.schemas.patient_schemas import (
     ConsentFlagsSchema,
     EmergencyContactSchema,
@@ -14,20 +31,49 @@ from src.presentation.schemas.patient_schemas import (
     PatientPatchRequest,
     PatientProfileResponse,
 )
+from src.presentation.schemas.session_schemas import (
+    FogEpisodeItem,
+    SessionCreateRequest,
+    SessionResultSyncResponse,
+    SessionResultUpload,
+    SessionSummary,
+    SkeletonBatchAckResponse,
+    SkeletonBatchUpload,
+    VideoFallbackAnalysisResponse,
+    WindowPredictionItem,
+)
 
 __all__ = [
     "AuthTokenResponse",
     "ConsentFlagsSchema",
+    "EmergencyAlertRequest",
+    "EmergencyAlertResponse",
     "EmergencyContactSchema",
     "EmergencyContactUpsertSchema",
+    "FogEpisodeItem",
     "LoginRequest",
     "LogoutRequest",
+    "MedicationLogCreate",
+    "MedicationLogListResponse",
+    "MedicationLogResponse",
+    "ModelArtifactSpecSchema",
+    "ModelManifestSchema",
     "PatientEraseRequest",
     "PatientPatchRequest",
     "PatientProfileResponse",
+    "PatientTrendsResponse",
     "ProblemDetailsSchema",
     "RefreshRequest",
     "RegisterRequest",
+    "SessionCreateRequest",
+    "SessionResultSyncResponse",
+    "SessionResultUpload",
+    "SessionSummary",
+    "SkeletonBatchAckResponse",
+    "SkeletonBatchUpload",
     "StrictBaseSchema",
+    "TrendPointSchema",
     "UtcDatetime",
+    "VideoFallbackAnalysisResponse",
+    "WindowPredictionItem",
 ]

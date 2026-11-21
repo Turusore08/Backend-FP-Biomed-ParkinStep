@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     auth_login_rate_limit_max_attempts: int = Field(default=10, ge=1, le=1000)
     auth_login_rate_limit_window_sec: int = Field(default=60, ge=1, le=3600)
     idempotency_ttl_hours: int = Field(default=168, ge=1, le=8760)
+    ota_app_key: str = ""
+    model_cdn_base_url: str = "https://models.parkinstep.example.org/bundles"
+    max_video_upload_bytes: int = Field(default=31_457_280, ge=1024, le=104_857_600)
+    video_temp_dir: str | None = None
     cors_allowed_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
     log_level: str = "INFO"
 

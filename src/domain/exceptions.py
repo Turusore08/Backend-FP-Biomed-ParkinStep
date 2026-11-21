@@ -149,3 +149,17 @@ class IdempotencyInProgressError(DomainError):
     default_title = "Idempotent Request In Progress"
     default_error_code = "IDEMPOTENCY_IN_PROGRESS"
     default_problem_slug = "idempotency-in-progress"
+
+
+class PayloadTooLargeError(DomainError):
+    default_status_code = 413
+    default_title = "Payload Too Large"
+    default_error_code = "PAYLOAD_TOO_LARGE"
+    default_problem_slug = "payload-too-large"
+
+
+class UnsupportedMediaTypeError(DomainError):
+    default_status_code = 415
+    default_title = "Unsupported Media Type"
+    default_error_code = "UNSUPPORTED_MEDIA_TYPE"
+    default_problem_slug = "unsupported-media-type"

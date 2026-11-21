@@ -25,6 +25,9 @@ def test_settings(tmp_path: Path) -> Settings:
         auth_login_rate_limit_max_attempts=5,
         auth_login_rate_limit_window_sec=60,
         idempotency_ttl_hours=24,
+        ota_app_key="test-ota-app-key-secret",
+        max_video_upload_bytes=1024 * 64,
+        video_temp_dir=str(tmp_path / "video_tmp"),
         log_level="WARNING",
     )
 

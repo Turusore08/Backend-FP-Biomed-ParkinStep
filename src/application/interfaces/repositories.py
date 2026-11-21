@@ -4,12 +4,19 @@ from typing import Any, Protocol
 from uuid import UUID
 
 from src.domain.entities import (
+    ClinicalSession,
     ConsentAuditEvent,
+    EmergencyAlert,
     EmergencyContact,
+    FogEpisode,
     IdempotencyRecord,
+    MedicationLog,
+    ModelBundleManifest,
     PatientProfile,
     RefreshTokenRecord,
+    SkeletonChunk,
     UserAccount,
+    WindowPrediction,
 )
 
 
@@ -120,11 +127,87 @@ class IdempotencyRepository(Protocol):
         ...
 
 
+class MedicationRepository(Protocol):
+    async def create(self, log: MedicationLog) -> None:
+        ...
+
+    async def get_by_id(self, log_id: UUID) -> MedicationLog | None:
+        ...
+
+    async def list_by_patient(
+        self,
+        patient_id: UUID,
+        *,
+        from_utc: datetime | None,
+        to_utc: datetime | None,
+        limit: int,
+        offset: int,
+    ) -> tuple[list[MedicationLog], int]:
+        ...
+
+
+class SessionRepository(Protocol):
+    async def create(self, session: ClinicalSession) -> None:
+        ...
+
+    async def get_by_id(self, session_id: UUID) -> ClinicalSession | None:
+        ...
+
+    async def add_skeleton_chunk(self, chunk: SkeletonChunk) -> None:
+        ...
+
+    async def has_skeleton_chunk(self, session_id: UUID, chunk_index: int) -> bool:
+        ...
+
+    async def save_results(
+        self,
+        session: ClinicalSession,
+        episodes: list[FogEpisode],
+        windows: list[WindowPrediction],
+    ) -> None:
+        ...
+
+    async def list_completed_for_trends(
+        self,
+        patient_id: UUID,
+        *,
+        from_utc: datetime | None,
+        to_utc: datetime | None,
+    ) -> list[ClinicalSession]:
+        ...
+
+
+class AlertRepository(Protocol):
+    async def create(self, alert: EmergencyAlert) -> None:
+        ...
+
+    async def get_by_id(self, alert_id: UUID) -> EmergencyAlert | None:
+        ...
+
+
+class ModelBundleRepository(Protocol):
+    async def get_active(self) -> ModelBundleManifest | None:
+        ...
+
+    async def upsert(
+        self,
+        manifest: ModelBundleManifest,
+        *,
+        is_active: bool,
+        published_at_utc: datetime,
+    ) -> None:
+        ...
+
+
 class UnitOfWork(Protocol):
     users: UserRepository
     refresh_tokens: RefreshTokenRepository
     patients: PatientRepository
     idempotency: IdempotencyRepository
+    medications: MedicationRepository
+    sessions: SessionRepository
+    alerts: AlertRepository
+    model_bundles: ModelBundleRepository
 
     async def __aenter__(self) -> "UnitOfWork":
         ...

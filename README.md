@@ -43,5 +43,5 @@ uv run pytest --cov=src --cov-report=term-missing --cov-fail-under=85
 ## Implementation Phases
 
 - [x] **Phase 1:** Clean Architecture scaffold, PostgreSQL schema + Alembic migrations, JWT auth (`register`/`login`/`refresh`/`logout`) with token rotation & reuse detection, Patients & UU PDP (`GET`/`PATCH`/`DELETE`), Idempotency middleware, RFC 7807 error handler.
-- [ ] **Phase 2:** Medication logs, Clinical sessions, LB6 skeleton frames (`[T][6][3]`), Session results, Cloud video fallback opt-in, Longitudinal analytics trends, Emergency alerts, OTA model manifest (`B_15hz`).
+- [x] **Phase 2:** Medication logs, Clinical sessions, LB6 skeleton frames (`[T][6][3]`), Session results, Cloud video fallback opt-in, Longitudinal analytics trends, Emergency alerts, OTA model manifest (`B_15hz`).
 - [ ] **Phase 3:** Clinical PDF/JSON report export, WebSocket `CLOUD_FALLBACK` streaming (`126` FFT features), OpenAPI 3.1 contract CI export, Rootless hardened Dockerfile & Compose.

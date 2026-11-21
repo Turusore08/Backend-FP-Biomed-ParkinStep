@@ -4,7 +4,11 @@ from src.application.dtos.common import ActorContext
 from src.application.interfaces.repositories import UnitOfWork
 from src.domain.entities import PatientProfile
 from src.domain.enums import UserRole
-from src.domain.exceptions import AuthorizationDeniedError, EntityNotFoundError
+from src.domain.exceptions import (
+    AuthorizationDeniedError,
+    ConsentRevokedError,
+    EntityNotFoundError,
+)
 
 
 async def ensure_patient_access(
@@ -33,3 +37,21 @@ async def ensure_patient_access(
             return patient
 
     raise AuthorizationDeniedError("You do not have permission to access this patient record.")
+
+
+def require_sync_consent(patient: PatientProfile) -> None:
+    """Enforce UU PDP Consent A before uploading telemetry or session results."""
+    if not patient.consent.consent_skeleton_sync:
+        raise ConsentRevokedError(
+            "Cloud telemedicine sync consent (consent_skeleton_sync) is disabled.",
+            error_code="CONSENT_SYNC_REQUIRED",
+        )
+
+
+def require_cloud_video_consent(patient: PatientProfile) -> None:
+    """Enforce UU PDP Consent B before accepting opt-in cloud video fallback."""
+    if not patient.consent.consent_cloud_video:
+        raise ConsentRevokedError(
+            "Cloud fallback video analysis consent (consent_cloud_video) is disabled.",
+            error_code="CONSENT_CLOUD_VIDEO_REQUIRED",
+        )

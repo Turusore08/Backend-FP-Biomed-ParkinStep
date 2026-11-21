@@ -1,10 +1,17 @@
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.application.interfaces import (
+    AlertRepository,
     IdempotencyRepository,
+    MedicationRepository,
+    ModelBundleRepository,
     PatientRepository,
     RefreshTokenRepository,
+    SessionRepository,
     UserRepository,
+)
+from src.infrastructure.persistence.repositories.sql_alert_repository import (
+    SqlAlertRepository,
 )
 from src.infrastructure.persistence.repositories.sql_auth_repository import (
     SqlRefreshTokenRepository,
@@ -13,8 +20,17 @@ from src.infrastructure.persistence.repositories.sql_auth_repository import (
 from src.infrastructure.persistence.repositories.sql_idempotency_repository import (
     SqlIdempotencyRepository,
 )
+from src.infrastructure.persistence.repositories.sql_medication_repository import (
+    SqlMedicationRepository,
+)
+from src.infrastructure.persistence.repositories.sql_model_bundle_repository import (
+    SqlModelBundleRepository,
+)
 from src.infrastructure.persistence.repositories.sql_patient_repository import (
     SqlPatientRepository,
+)
+from src.infrastructure.persistence.repositories.sql_session_repository import (
+    SqlSessionRepository,
 )
 
 
@@ -28,6 +44,10 @@ class SqlAlchemyUnitOfWork:
         self.refresh_tokens: RefreshTokenRepository
         self.patients: PatientRepository
         self.idempotency: IdempotencyRepository
+        self.medications: MedicationRepository
+        self.sessions: SessionRepository
+        self.alerts: AlertRepository
+        self.model_bundles: ModelBundleRepository
 
     async def __aenter__(self) -> "SqlAlchemyUnitOfWork":
         self._session = self._session_factory()
@@ -35,6 +55,10 @@ class SqlAlchemyUnitOfWork:
         self.refresh_tokens = SqlRefreshTokenRepository(self._session)
         self.patients = SqlPatientRepository(self._session)
         self.idempotency = SqlIdempotencyRepository(self._session)
+        self.medications = SqlMedicationRepository(self._session)
+        self.sessions = SqlSessionRepository(self._session)
+        self.alerts = SqlAlertRepository(self._session)
+        self.model_bundles = SqlModelBundleRepository(self._session)
         return self
 
     async def __aexit__(

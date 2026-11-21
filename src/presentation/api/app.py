@@ -4,15 +4,29 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.application.interfaces import PasswordHasherPort, RateLimiterPort, UnitOfWork
+from src.application.interfaces import (
+    CloudVideoAnalyzerPort,
+    EmergencyNotifierPort,
+    PasswordHasherPort,
+    RateLimiterPort,
+    SkeletonCodecPort,
+    UnitOfWork,
+    VideoDisposalPort,
+)
 from src.infrastructure.config import Settings, get_settings
 from src.infrastructure.logging import configure_logging
+from src.infrastructure.notifications import LoggingEmergencyNotifier
 from src.infrastructure.persistence import create_async_engine_from_url, create_session_factory
+from src.infrastructure.persistence.codecs.skeleton_codec import ZlibSkeletonCodec
 from src.infrastructure.persistence.repositories import SqlAlchemyUnitOfWork
 from src.infrastructure.security import (
     Argon2PasswordHasher,
     InMemorySlidingWindowRateLimiter,
     JwtTokenProvider,
+)
+from src.infrastructure.security.video_disposal import (
+    SecureTempVideoDisposer,
+    StubCloudVideoAnalyzer,
 )
 from src.presentation.api.middleware import IdempotencyMiddleware, register_exception_handlers
 from src.presentation.api.v1.health import router as health_router
@@ -32,6 +46,10 @@ def create_app(
     *,
     password_hasher: PasswordHasherPort | None = None,
     rate_limiter: RateLimiterPort | None = None,
+    skeleton_codec: SkeletonCodecPort | None = None,
+    emergency_notifier: EmergencyNotifierPort | None = None,
+    video_disposal: VideoDisposalPort | None = None,
+    cloud_video_analyzer: CloudVideoAnalyzerPort | None = None,
     extra_idempotent_patterns: list[str] | None = None,
 ) -> FastAPI:
     """Create and wire the FastAPI application following Clean Architecture boundaries."""
@@ -73,6 +91,10 @@ def create_app(
     app.state.dummy_password_hash = dummy_password_hash
     app.state.token_provider = token_provider
     app.state.rate_limiter = limiter
+    app.state.skeleton_codec = skeleton_codec or ZlibSkeletonCodec()
+    app.state.emergency_notifier = emergency_notifier or LoggingEmergencyNotifier()
+    app.state.video_disposal = video_disposal or SecureTempVideoDisposer(cfg.video_temp_dir)
+    app.state.cloud_video_analyzer = cloud_video_analyzer or StubCloudVideoAnalyzer()
 
     register_exception_handlers(app)
 
@@ -101,7 +123,7 @@ def create_app(
         allow_origins=cfg.cors_allowed_origins,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type", "Idempotency-Key"],
+        allow_headers=["Authorization", "Content-Type", "Idempotency-Key", "X-App-Key"],
     )
 
     app.include_router(health_router)
